@@ -73,6 +73,16 @@ def tinyMazeSearch(problem):
     w = Directions.WEST
     return  [s, s, w, s, w, w, s, w]
 
+
+class Node():
+
+	def __init__(self, position, action, path):
+		self.position = position
+		self.action = action
+		self.path = path
+
+
+
 def depthFirstSearch(problem):
     """
     Search the deepest nodes in the search tree first.
@@ -87,44 +97,21 @@ def depthFirstSearch(problem):
     print "Is the start a goal?", problem.isGoalState(problem.getStartState())
     print "Start's successors:", problem.getSuccessors(problem.getStartState())
     """
-
-    # print "Start:", problem.getStartState()
-    # print "Is the start a goal?", problem.isGoalState(problem.getStartState())
-    # print "Start's successors:", problem.getSuccessors(problem.getStartState())
-    closed = set([])
-    edgeTo = {}
+	closed = set()
     fringe = util.Stack()
-    # print("Start:", problem.getStartState())
-    start = (problem.getStartState(), None) 
-    fringe.push(start)
-    while not fringe.isEmpty():
+    v = Node(problem.getStartState(), None, [])
+    fringe.push(v)
+    while not problem.isGoalState(v.position):
+    	if fringe.isEmpty():
+    		return None
     	v = fringe.pop()
-    	if problem.isGoalState(v[0]):
-    		break
-    	if v not in closed:
-    		closed.add(v)
-    		for successor in problem.getSuccessors(v[0]):
-    			# pdb.set_trace()
-    			node = (successor[0], successor[1])
-    			fringe.push(node)
-    			if (v in edgeTo) and (edgeTo[v]==node):
-    				continue
-    			else:
-    				edgeTo[node] = v
-    print(closed)
-    print(edgeTo)
-    target = v
-    print("GOAL IS ", v)
-    start = problem.getStartState()
-    print("START IS ", start)
-    path = []
-    while (target!=start):
-    	node = edgeTo[target]
-    	path.append(node[1])
-    	target = node
-    	print(target)
-    return path
-
+    	if not v.position in closed:
+    		closed.add(v.position)
+    		for successor in problem.getSuccessors(v.position):
+    			w = Node(successor[0], successor[1], v.path[:])
+    			w.path.append(successor[1])
+    			fringe.push(w)
+    return v.path
 
 
 
