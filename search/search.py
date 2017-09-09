@@ -75,12 +75,15 @@ def tinyMazeSearch(problem):
 
 
 class Node():
+	"""
 
-	def __init__(self, position, action, path):
+	"""
+
+	def __init__(self, position, action, path, cost=0):
 		self.position = position
 		self.action = action
 		self.path = path
-
+		self.cost = cost
 
 
 def depthFirstSearch(problem):
@@ -97,7 +100,8 @@ def depthFirstSearch(problem):
     print "Is the start a goal?", problem.isGoalState(problem.getStartState())
     print "Start's successors:", problem.getSuccessors(problem.getStartState())
     """
-	closed = set()
+
+    closed = set()
     fringe = util.Stack()
     v = Node(problem.getStartState(), None, [])
     fringe.push(v)
@@ -113,19 +117,46 @@ def depthFirstSearch(problem):
     			fringe.push(w)
     return v.path
 
-
-
-
-
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    
+    closed = set()
+    fringe = util.Queue()
+    v = Node(problem.getStartState(), None, [])
+    fringe.push(v)
+    while not problem.isGoalState(v.position):
+    	if fringe.isEmpty():
+    		return None
+    	v = fringe.pop()
+    	if not v.position in closed:
+    		closed.add(v.position)
+    		for successor in problem.getSuccessors(v.position):
+    			w = Node(successor[0], successor[1], v.path[:])
+    			w.path.append(successor[1])
+    			fringe.push(w)
+    return v.path
+
 
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+
+    closed = set()
+    fringe = util.PriorityQueue()
+    v = Node(problem.getStartState(), None, [], 0)
+    fringe.push(v, 0)
+    while not problem.isGoalState(v.position):
+    	if fringe.isEmpty():
+    		return None
+    	v = fringe.pop()
+    	if not v.position in closed:
+    		closed.add(v.position)
+    		for successor in problem.getSuccessors(v.position):
+    			w = Node(successor[0], successor[1], v.path[:], successor[2])
+    			w.path.append(successor[1])
+    			fringe.push(w, w.cost)
+    return v.path
+    
+
 
 def nullHeuristic(state, problem=None):
     """
