@@ -112,7 +112,7 @@ def depthFirstSearch(problem):
     		closed.add(v.state)
     		for successor in problem.getSuccessors(v.state):
     			w = Node(successor[0], successor[1], v.path[:])
-    			w.path.append(successor[1])
+    			w.path.append(w.action)
     			fringe.push(w)
     return None
 
@@ -131,7 +131,7 @@ def breadthFirstSearch(problem):
     		closed.add(v.state)
     		for successor in problem.getSuccessors(v.state):
     			w = Node(successor[0], successor[1], v.path[:])
-    			w.path.append(successor[1])
+    			w.path.append(w.action)
     			fringe.push(w)
     return None
 
@@ -150,7 +150,7 @@ def uniformCostSearch(problem):
     		closed.add(v.state)
     		for successor in problem.getSuccessors(v.state):
     			w = Node(successor[0], successor[1], v.path[:], v.cost + successor[2])
-    			w.path.append(successor[1])
+    			w.path.append(w.action)
     			fringe.push(w, w.cost)
     return None
     
@@ -176,7 +176,7 @@ def aStarSearch(problem, heuristic=nullHeuristic):
     		closed.add(v.state)
     		for successor in problem.getSuccessors(v.state):
     			w = Node(successor[0], successor[1], v.path[:], v.cost + successor[2])
-    			w.path.append(successor[1])
+    			w.path.append(w.action)
     			fringe.push(w, w.cost + heuristic(w.state, problem))
     return None
     
