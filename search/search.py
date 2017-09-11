@@ -76,15 +76,14 @@ def tinyMazeSearch(problem):
 
 class Node():
 	"""
-
+	Node object representing vertex in graph search.
 	"""
 
-	def __init__(self, position, action, path, cost=0):
-		self.position = position
+	def __init__(self, state, action, path, cost=0):
+		self.state = state
 		self.action = action
 		self.path = path
 		self.cost = cost
-
 
 def depthFirstSearch(problem):
     """
@@ -105,17 +104,17 @@ def depthFirstSearch(problem):
     fringe = util.Stack()
     v = Node(problem.getStartState(), None, [])
     fringe.push(v)
-    while not problem.isGoalState(v.position):
-    	if fringe.isEmpty():
-    		return None
+    while not fringe.isEmpty():
     	v = fringe.pop()
-    	if not v.position in closed:
-    		closed.add(v.position)
-    		for successor in problem.getSuccessors(v.position):
+    	if problem.isGoalState(v.state):
+    		return v.path
+    	if not v.state in closed:
+    		closed.add(v.state)
+    		for successor in problem.getSuccessors(v.state):
     			w = Node(successor[0], successor[1], v.path[:])
     			w.path.append(successor[1])
     			fringe.push(w)
-    return v.path
+    return None
 
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
@@ -124,18 +123,17 @@ def breadthFirstSearch(problem):
     fringe = util.Queue()
     v = Node(problem.getStartState(), None, [])
     fringe.push(v)
-    while not problem.isGoalState(v.position):
-    	if fringe.isEmpty():
-    		return None
+    while not fringe.isEmpty():
     	v = fringe.pop()
-    	if not v.position in closed:
-    		closed.add(v.position)
-    		for successor in problem.getSuccessors(v.position):
+    	if problem.isGoalState(v.state):
+    		return v.path
+    	if not v.state in closed:
+    		closed.add(v.state)
+    		for successor in problem.getSuccessors(v.state):
     			w = Node(successor[0], successor[1], v.path[:])
     			w.path.append(successor[1])
     			fringe.push(w)
-    return v.path
-
+    return None
 
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
@@ -144,20 +142,18 @@ def uniformCostSearch(problem):
     fringe = util.PriorityQueue()
     v = Node(problem.getStartState(), None, [], 0)
     fringe.push(v, 0)
-    while not problem.isGoalState(v.position):
-    	if fringe.isEmpty():
-    		return None
+    while not fringe.isEmpty():
     	v = fringe.pop()
-    	if not v.position in closed:
-    		closed.add(v.position)
-    		for successor in problem.getSuccessors(v.position):
-    			w = Node(successor[0], successor[1], v.path[:], successor[2])
+    	if problem.isGoalState(v.state):
+    		return v.path
+    	if not v.state in closed:
+    		closed.add(v.state)
+    		for successor in problem.getSuccessors(v.state):
+    			w = Node(successor[0], successor[1], v.path[:], v.cost + successor[2])
     			w.path.append(successor[1])
     			fringe.push(w, w.cost)
-    return v.path
+    return None
     
-
-
 def nullHeuristic(state, problem=None):
     """
     A heuristic function estimates the cost from the current state to the nearest
@@ -167,8 +163,23 @@ def nullHeuristic(state, problem=None):
 
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    
+    closed = set()
+    fringe = util.PriorityQueue()
+    v = Node(problem.getStartState(), None, [], 0)
+    fringe.push(v, 0)
+    while not fringe.isEmpty():
+    	v = fringe.pop()
+    	if problem.isGoalState(v.state):
+    		return v.path
+    	if not v.state in closed:
+    		closed.add(v.state)
+    		for successor in problem.getSuccessors(v.state):
+    			w = Node(successor[0], successor[1], v.path[:], v.cost + successor[2])
+    			w.path.append(successor[1])
+    			fringe.push(w, w.cost + heuristic(w.state, problem))
+    return None
+    
 
 
 # Abbreviations
