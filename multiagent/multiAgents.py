@@ -160,10 +160,8 @@ class MinimaxAgent(MultiAgentSearchAgent):
           gameState.isLose():
             Returns whether or not the game state is a losing state
         """
-        # self.depth
-        # self.evaluationFunction
+        "*** YOUR CODE HERE ***"
         result = self.searchStates(gameState, self.depth, 0)
-        # print(result[1])
         return result[1]
 
     def searchStates(self, gameState, depth, agentIndex, action=None):
@@ -173,21 +171,19 @@ class MinimaxAgent(MultiAgentSearchAgent):
     	"""
 
     	if depth==0 or gameState.isWin() or gameState.isLose():
-        	v = float(self.evaluationFunction(gameState))
-        	return (v, action)
+        	value = float(self.evaluationFunction(gameState))
+        	return (value, action)
 
         if agentIndex==0:
         	bestValue = float("-inf")
         	bestAction = None
         	for action in gameState.getLegalActions(0):
         		successor = gameState.generateSuccessor(0, action)
-        		for agent in range(1, gameState.getNumAgents()):
-        			result = self.searchStates(successor, depth, agent, action)
-        			v = result[0]
-        			# print("AGENT IS ", agentIndex, " AND VALS ARE ", v, bestValue)
-	        		if v > bestValue:
-	        			bestValue = v
-	        			bestAction = action
+        		result = self.searchStates(successor, depth, agentIndex+1, action)
+        		v = result[0]
+        		if v > bestValue:
+        			bestValue = v
+        			bestAction = action
         	return (bestValue, bestAction)
 
         elif agentIndex > 0:
@@ -195,7 +191,10 @@ class MinimaxAgent(MultiAgentSearchAgent):
         	bestAction = None
         	for action in gameState.getLegalActions(agentIndex):
         		successor = gameState.generateSuccessor(agentIndex, action)
-        		result = self.searchStates(successor, depth-1, 0, action)
+        		if agentIndex==gameState.getNumAgents()-1:
+        			result = self.searchStates(successor, depth-1, 0, action)
+        		else:
+        			result = self.searchStates(successor, depth, agentIndex+1, action)
         		v = result[0]
         		if v < bestValue:
         			bestValue = v
@@ -212,7 +211,51 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
           Returns the minimax action using self.depth and self.evaluationFunction
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        result = self.searchStates(gameState, self.depth)
+        return result[1]
+
+    def searchStates(self, gameState, depth, agentIndex=0, alpha=float("-inf"), beta=float("inf"), action=None):
+        """
+          Recursive helper function for minimax with alpha-beta pruning.
+          Performs DFS postorder traversal to depth defined by SearchAgent.
+        """	
+
+        if depth==0 or gameState.isWin() or gameState.isLose():
+			value = float(self.evaluationFunction(gameState))
+			return (value, action)
+
+        if agentIndex==0:
+        	bestValue = float("-inf")
+        	bestAction = None
+        	for action in gameState.getLegalActions(0):
+        		successor = gameState.generateSuccessor(0, action)
+        		result = self.searchStates(successor, depth, agentIndex+1, alpha, beta, action)
+        		v = result[0]
+        		if v > bestValue:
+        			bestValue = v
+        			bestAction = action
+        		alpha = max(alpha, bestValue)
+        		if beta < alpha:
+        			break
+        	return (bestValue, bestAction)
+
+        elif agentIndex > 0:
+        	bestValue = float("inf")
+        	bestAction = None
+        	for action in gameState.getLegalActions(agentIndex):
+        		successor = gameState.generateSuccessor(agentIndex, action)
+        		if agentIndex==gameState.getNumAgents()-1:
+        			result = self.searchStates(successor, depth-1, 0, alpha, beta, action)
+        		else:
+        			result = self.searchStates(successor, depth, agentIndex+1, alpha, beta, action)
+        		v = result[0]
+        		if v < bestValue:
+        			bestValue = v
+        			bestAction = action
+        		beta = min(beta, bestValue)
+        		if beta < alpha:
+        			break
+        	return (bestValue, bestAction)
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
