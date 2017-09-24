@@ -163,7 +163,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
         # self.depth
         # self.evaluationFunction
         result = self.searchStates(gameState, self.depth, 0)
-        print(result[1])
+        # print(result[1])
         return result[1]
 
     def searchStates(self, gameState, depth, agentIndex, action=None):
@@ -176,36 +176,32 @@ class MinimaxAgent(MultiAgentSearchAgent):
         	v = self.evaluationFunction(gameState)
         	return (v, action)
 
-        if agentIndex > gameState.getNumAgents():
-        	return self.searchStates(gameState, depth, 0, action)
-
         if agentIndex==0:
         	bestValue = float("-inf")
         	bestAction = None
         	for action in gameState.getLegalActions(0):
         		successor = gameState.generateSuccessor(0, action)
-        		result = self.searchStates(successor, depth-1, 1, action)
-        		# print(result)
-        		v = result[0]
-        		print("AGENT IS ", agentIndex, " AND VALS ARE ", v, bestValue)
-        		if v > bestValue:
-        			bestValue = v
-        			bestAction = action
+        		for agent in range(1, gameState.getNumAgents()):
+        			result = self.searchStates(successor, depth-1, agent, action)
+        			v = result
+        			v = result[0]
+	        		if v > bestValue:
+	        			bestValue = v
+	        			bestAction = action
+			print("AGENT IS ", agentIndex, " AND VALS ARE ", v, bestValue)
         	return (bestValue, bestAction)
 
-        elif agentIndex <= gameState.getNumAgents():
+        elif agentIndex > 0:
         	bestValue = float("inf")
         	bestAction = None
         	for action in gameState.getLegalActions(agentIndex):
         		successor = gameState.generateSuccessor(agentIndex, action)
-        		result = self.searchStates(successor, depth-1, agentIndex+1, action)
-        		# print(result)
+        		result = self.searchStates(successor, depth-1, 0, action)
         		v = result[0]
-        		# print(v, bestValue)
-        		print("AGENT IS ", agentIndex, " AND VALS ARE ", v, bestValue)
         		if v < bestValue:
         			bestValue = v
         			bestAction = action
+			print("AGENT IS ", agentIndex, " AND VALS ARE ", v, bestValue)
         	return (bestValue, bestAction)
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
