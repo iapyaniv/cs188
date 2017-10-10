@@ -26,7 +26,7 @@
 # Pieter Abbeel (pabbeel@cs.berkeley.edu).
 
 
-import mdp, util
+import mdp, util, sys
 
 from learningAgents import ValueEstimationAgent
 import collections
@@ -62,17 +62,22 @@ class ValueIterationAgent(ValueEstimationAgent):
     def runValueIteration(self):
         # Write value iteration code here
         
-        for state in self.mdp.getStates:
-          self.values[state] = 0
-        while self.iterations >= 0:
-          for state in self.mdp.getStates:
-            qMax = -sys.maxint - 1
-            for action in mdp.getPossibleActions(state):
-              q = computeQValueFromValues(state, action) > q
-              if q > qMax:
-                qMax = q
-            self.values(state) = qMax
-        return getValue(self.mdp.getStartState)
+        while self.iterations > 0:
+          tempValues = util.Counter()
+          for state in self.mdp.getStates():
+            if self.mdp.isTerminal(state):
+              tempValues[state] = 0
+            else: 
+              qMax = -sys.maxint - 1
+              q = None
+              for action in self.mdp.getPossibleActions(state):
+                q = self.computeQValueFromValues(state, action)
+                qMax = max(q, qMax)
+              tempValues[state] = qMax
+          self.iterations -= 1
+          self.values = tempValues
+
+        return self.getValue(self.mdp.getStartState())
 
     def getValue(self, state):
         """
@@ -87,10 +92,8 @@ class ValueIterationAgent(ValueEstimationAgent):
           value function stored in self.values.
         """
         q = 0
-        for transition in self.mdp.getTransitionStatesAndProbs(state, action):
-          nextState = transition[0]
-          probability = transition[1]
-          q += probability * (mdp.getReward(state, action, nexState) + self.values[nextState])
+        for nextState, probability in self.mdp.getTransitionStatesAndProbs(state, action):
+          q += probability * (self.mdp.getReward(state, action, nextState) + (self.discount * self.values[nextState]))
         return q
 
     def computeActionFromValues(self, state):
@@ -104,10 +107,10 @@ class ValueIterationAgent(ValueEstimationAgent):
         """
         bestAction = None
         bestQ = -sys.maxint - 1
-        for action in self.mdp.getPossibleActions:
-          v = self.values(action)
-          if v > bestQ: 
-            bestQ = v
+        for action in self.mdp.getPossibleActions(state):
+          q = self.computeQValueFromValues(state, action)
+          if q > bestQ: 
+            bestQ = q
             bestAction = action
         return bestAction
 
