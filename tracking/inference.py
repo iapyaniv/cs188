@@ -324,11 +324,13 @@ class ExactInference(InferenceModule):
         total = 0
         for position in self.allPositions:
         	weight = self.getObservationProb(observation, pacmanPosition, position, jailPosition)
+        	copy[position] *= weight
         	total += weight
-        	self.beliefs[position] *= weight
 
         if total == 0:
-        	self.beliefs = copy
+        	return
+
+        self.beliefs = copy
         self.beliefs.normalize()
 
     def elapseTime(self, gameState):
@@ -339,8 +341,43 @@ class ExactInference(InferenceModule):
         The transition model is not entirely stationary: it may depend on
         Pacman's current position. However, this is not a problem, as Pacman's
         current position is known.
+
+        NOTES: the elapseTime step should update the belief at every position on 
+        the map after one time step elapsing. Your agent has access to the action
+        distribution for the ghost through self.getPositionDistribution. In order
+        to obtain the distribution over new positions for the ghost use:
+
+        newPosDist = self.getPositionDistribution(gameState, oldPos)
+
+        Where oldPos refers to the previous ghost position. newPosDist is a 
+        DiscreteDistribution object, where for each position p in self.allPositions,
+        newPosDist[p] is the probability that the ghost is at position p at time
+        t + 1, given that the ghost is at position oldPos at time t. Note that this
+        call can be fairly expensive, so if your code is timing out, one thing to
+        think about is whether or not you can reduce the number of calls to
+        self.getPositionDistribution.
+
+        Update function: B(Wt+1)' = sum over wt P(Wt+1|wt)B(Wt); in other words,
+        loop over the oldPos, find the newPosDist for each oldPos, then update
+        each newPos in that distribution with the probabiltiy value in the newPosDist
+        times the belief of the oldPos. Be careful that you aren't changing anything
+        as you're looping -- store intermediate results somewhere else, and make
+        assignments after you're done looping. Also be careful that when you update
+        your belief distribution you aren't adding to the original distribution --
+        create a new distribution (the old value for self.beliefs[pos] shouldn't get
+        summed into the new value).
+
         """
-        "*** YOUR CODE HERE ***"
+        oldBeliefs = self.beliefs.copy()
+        newBeliefs = DiscreteDistribution()
+        for oldPos in self.allPositions:
+        	newPosDist = self.getPositionDistribution(gameState, oldPos)
+        	oldPosProb = self.beliefs[oldPos]
+        	for newPos in newPosDist.keys():
+        		newPosProb = newPosDist[newPos]
+        		newBeliefs[newPos] += (oldPosProb * newPosProb)
+        newBeliefs.normalize()
+        self.beliefs = newBeliefs
 
     def getBeliefDistribution(self):
         return self.beliefs
@@ -364,9 +401,19 @@ class ParticleFilter(InferenceModule):
         a particle could be located. Particles should be evenly (not randomly)
         distributed across positions in order to ensure a uniform prior. Use
         self.particles for the list of particles.
+
+        NOTES: A particle (sample) is a ghost position. The variable you store your
+        particles in must be a list (a collection of unweighted variables--in this
+        case variables are positions). The getBeliefDistribution method takes the
+        list of particles and converts it into a DiscreteDistribution object. 
         """
         self.particles = []
-        "*** YOUR CODE HERE ***"
+        numPositions = len(self.legalPositions)
+        for i in range(self.numParticles):
+        	if i < numPositions:
+        		self.particles.append(self.legalPositions[i])
+        	else:
+        		self.particles.append(self.legalPositions[i % numPositions])
 
     def observeUpdate(self, observation, gameState):
         """
@@ -379,8 +426,36 @@ class ParticleFilter(InferenceModule):
         When all particles receive zero weight, the list of particles should
         be reinitialized by calling initializeUniformly. The total method of
         the DiscreteDistribution may be useful.
+
+        NOTES: You should use the function self.getObservationProb to find the
+        probability of an observation given Pacman's position, a potential ghost
+        position and the jail position. The sample method of the DiscreteDistribution
+        class will also be useful.
+
+		If you're still getting a uniform distribution, make sure you are accounting
+		for the original weight of th eparticles. You might be setting observation
+		particles independently of what the weight of each particle was in the particle
+		list! Remember to factor in both current and future weights.    
         """
-        "*** YOUR CODE HERE ***"
+        beliefs = self.getBeliefDistribution()
+        pacmanPosition = gameState.getPacmanPosition()
+        jailPosition = self.getJailPosition()
+
+        total = 0
+        copy = beliefs.copy()
+        for particle in self.particles:
+        	weight = self.getObservationProb(observation, pacmanPosition, particle, jailPosition)
+        	copy[particle] += weight
+        	total += weight
+        
+        if total == 0:
+        	self.initializeUniformly(gameState)
+        	return
+
+        beliefs = copy
+        beliefs.normalize()
+        for i in range(self.numParticles):
+        	self.particles[i] = beliefs.sample()
 
     def elapseTime(self, gameState):
         """
@@ -395,8 +470,11 @@ class ParticleFilter(InferenceModule):
         locations conditioned on all evidence and time passage. This method
         essentially converts a list of particles into a belief distribution.
         """
-        "*** YOUR CODE HERE ***"
-
+        beliefs = DiscreteDistribution()
+        for particle in self.particles:
+        	beliefs[particle] += 1.0
+        beliefs.normalize()
+        return beliefs
 
 class JointParticleFilter(ParticleFilter):
     """
@@ -514,11 +592,3 @@ class MarginalInference(InferenceModule):
         for t, prob in jointDistribution.items():
             dist[t[self.index - 1]] += prob
         return dist
-
-# dist = DiscreteDistribution()
-# dist['a'] = 1
-# dist['b'] = 2
-# dist['c'] = 2
-# dist['d'] = 0
-# N = 100000.0
-# samples = [dist.sample() for _ in range(int(N))]

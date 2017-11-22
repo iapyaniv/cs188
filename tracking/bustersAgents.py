@@ -12,7 +12,7 @@
 # Pieter Abbeel (pabbeel@cs.berkeley.edu).
 
 
-import util
+import util, sys
 from game import Agent
 from game import Directions
 from keyboardAgents import KeyboardAgent
@@ -133,6 +133,14 @@ class GreedyBustersAgent(BustersAgent):
         First computes the most likely position of each ghost that has
         not yet been captured, then chooses an action that brings
         Pacman closest to the closest ghost (according to mazeDistance!).
+
+        NOTES: To find the maze distance between any two positions pos1 and
+        pos2, use self.distancer.getDistance(pos1, pos2). To find the successor
+        position of a position after an action:
+
+        successorPosition = Actions.getSuccessor(position, action)
+
+
         """
         pacmanPosition = gameState.getPacmanPosition()
         legal = [a for a in gameState.getLegalPacmanActions()]
@@ -140,4 +148,25 @@ class GreedyBustersAgent(BustersAgent):
         livingGhostPositionDistributions = \
             [beliefs for i, beliefs in enumerate(self.ghostBeliefs)
              if livingGhosts[i+1]]
-        "*** YOUR CODE HERE ***"
+
+        # find closest (likely) ghost position
+        closestGhostDistance = sys.maxint
+        closestGhost = None
+        for distribution in livingGhostPositionDistributions:
+            ghostPosition = distribution.argMax() # position with highest P in distribution
+            ghostDistance = self.distancer.getDistance(pacmanPosition, ghostPosition)
+            if ghostDistance < closestGhostDistance:
+                closestGhostDistance = ghostDistance
+                closestGhost = ghostPosition
+
+        # find action that minimizes distance to closest (likely) ghost position
+        bestActionDistance = sys.maxint
+        bestAction = None
+        for action in legal:
+            successorPosition = Actions.getSuccessor(pacmanPosition, action)
+            successorDistance = self.distancer.getDistance(successorPosition, closestGhost)
+            if successorDistance < bestActionDistance:
+                bestActionDistance = successorDistance
+                bestAction = action
+
+        return bestAction
